@@ -32,6 +32,7 @@ function AudioIO(options) {
   const audioIOAdon = portAudioBindings.create(options);
   let ioStream;
 
+<<<<<<< HEAD
   const doRead = async (size) => {
     const result = await audioIOAdon.read(size);
     if (result.err) ioStream.destroy(result.err);
@@ -44,6 +45,20 @@ function AudioIO(options) {
   const doWrite = async (chunk, encoding, cb) => {
     const err = await audioIOAdon.write(chunk);
     cb(err);
+=======
+  const doRead = (size) => {
+    audioIOAdon.read(size, (err, buf, finished) => {
+      if (err) ioStream.destroy(err);
+      else {
+        ioStream.push(buf);
+        if (finished) ioStream.push(null);
+      }
+    });
+  };
+
+  const doWrite = (chunk, encoding, cb) => {
+    audioIOAdon.write(chunk, (err) => cb(err));
+>>>>>>> 2077bce (disabled segfault cause it shows error but the program still ran fine)
   };
 
   const readable = 'inOptions' in options;
@@ -79,9 +94,16 @@ function AudioIO(options) {
 
   ioStream.start = () => audioIOAdon.start();
 
+<<<<<<< HEAD
   ioStream.quit = async (cb) => {
     await audioIOAdon.quit('WAIT');
     if (typeof cb === 'function') cb();
+=======
+  ioStream.quit = (cb) => {
+    audioIOAdon.quit('WAIT', () => {
+      if (typeof cb === 'function') cb();
+    });
+>>>>>>> 2077bce (disabled segfault cause it shows error but the program still ran fine)
   };
 
   ioStream.abort = (cb) => {
