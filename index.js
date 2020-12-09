@@ -1,11 +1,8 @@
 /* Copyright 2019 Streampunk Media Ltd.
-
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +29,6 @@ function AudioIO(options) {
   const audioIOAdon = portAudioBindings.create(options);
   let ioStream;
 
-<<<<<<< HEAD
   const doRead = async (size) => {
     const result = await audioIOAdon.read(size);
     if (result.err) ioStream.destroy(result.err);
@@ -45,20 +41,6 @@ function AudioIO(options) {
   const doWrite = async (chunk, encoding, cb) => {
     const err = await audioIOAdon.write(chunk);
     cb(err);
-=======
-  const doRead = (size) => {
-    audioIOAdon.read(size, (err, buf, finished) => {
-      if (err) ioStream.destroy(err);
-      else {
-        ioStream.push(buf);
-        if (finished) ioStream.push(null);
-      }
-    });
-  };
-
-  const doWrite = (chunk, encoding, cb) => {
-    audioIOAdon.write(chunk, (err) => cb(err));
->>>>>>> 2077bce (disabled segfault cause it shows error but the program still ran fine)
   };
 
   const readable = 'inOptions' in options;
@@ -94,16 +76,9 @@ function AudioIO(options) {
 
   ioStream.start = () => audioIOAdon.start();
 
-<<<<<<< HEAD
   ioStream.quit = async (cb) => {
     await audioIOAdon.quit('WAIT');
     if (typeof cb === 'function') cb();
-=======
-  ioStream.quit = (cb) => {
-    audioIOAdon.quit('WAIT', () => {
-      if (typeof cb === 'function') cb();
-    });
->>>>>>> 2077bce (disabled segfault cause it shows error but the program still ran fine)
   };
 
   ioStream.abort = (cb) => {
