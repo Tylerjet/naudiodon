@@ -43,7 +43,7 @@ public:
   static napi_status NewInstance(napi_env env, napi_value arg, napi_value* instance);
 
   AudioIO(napi_env env, napi_callback_info info);
-  ~AudioIO();
+  ~AudioIO() {}
 
 private:
   std::shared_ptr<PaContext> mPaContext;

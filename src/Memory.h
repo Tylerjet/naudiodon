@@ -17,6 +17,7 @@
 #define MEMORY_H
 
 #include <memory>
+#include <cstring>
 
 namespace streampunk {
 

@@ -1,6 +1,10 @@
 {
   "name": "naudiodon",
+<<<<<<< HEAD
   "version": "2.3.1",
+=======
+  "version": "2.3.5",
+>>>>>>> 985dc267f0f746605040514c14358666c9f2d4f7
   "description": "Node Stream bindings for PortAudio.",
   "main": "./index.js",
   "types": "./index.d.ts",

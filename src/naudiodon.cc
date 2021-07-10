@@ -29,7 +29,7 @@ napi_value Create(napi_env env, napi_callback_info info) {
 
   napi_value instance;
   status = streampunk::AudioIO::NewInstance(env, args[0], &instance);
-  CHECK_STATUS;
+  // CHECK_STATUS;
 
   return instance;
 }

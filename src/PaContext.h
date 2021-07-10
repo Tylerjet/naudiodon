@@ -31,7 +31,7 @@ class Chunks;
 class PaContext {
 public:
   PaContext(napi_env env, napi_value inOptions, napi_value outOptions);
-  ~PaContext();
+  ~PaContext() {}
 
   enum class eStopFlag : uint8_t { WAIT = 0, ABORT = 1 };
 

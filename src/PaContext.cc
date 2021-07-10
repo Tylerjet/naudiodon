@@ -17,6 +17,7 @@
 #include "Params.h"
 #include "Chunks.h"
 #include <portaudio.h>
+#include <thread>
 
 namespace streampunk {
 
@@ -108,12 +109,6 @@ PaContext::PaContext(napi_env env, napi_value inOptions, napi_value outOptions)
   mInLatency = streamInfo->inputLatency;
 }
 
-PaContext::~PaContext() {
-  Pa_AbortStream(mStream);
-  Pa_CloseStream(mStream);
-  Pa_Terminate();
-}
-
 void PaContext::start(napi_env env) {
   PaError errCode = Pa_StartStream(mStream);
   if (errCode != paNoError) {
@@ -187,8 +182,12 @@ bool PaContext::getErrStr(std::string& errStr, bool isInput) {
 void PaContext::quit() {
   if (mInOptions)
     mInChunks->quit();
-  if (mOutOptions)
+  if (mOutOptions) {
     mOutChunks->quit();
+    mOutChunks->waitDone();
+  }
+  // wait for next PaCallback to run
+  std::this_thread::sleep_for(std::chrono::milliseconds(20));
 }
 
 bool PaContext::readPaBuffer(const void *srcBuf, uint32_t frameCount, double inTimestamp) {

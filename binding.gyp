@@ -23,16 +23,16 @@
                 '-std=c++11',
                 '-stdlib=libc++',
                 '-fexceptions'
-              ],
-              'OTHER_LDFLAGS': [
-                "-Wl,-rpath,<@(module_root_dir)/build/Release"
               ]
             },
             "link_settings": {
               "libraries": [
-                "<@(module_root_dir)/build/Release/libportaudio.dylib"
+                "-Wl,-rpath,@loader_path"
               ]
             },
+            "libraries": [
+              "libportaudio.dylib"
+            ],
             "copies": [
               {
                 "destination": "build/Release/",

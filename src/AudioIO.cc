@@ -73,7 +73,6 @@ AudioIO::AudioIO(napi_env env, napi_callback_info info): mInstanceRef(nullptr) {
 
   mPaContext = std::make_shared<PaContext>(env, hasInOptions ? inOptions : undef, hasOutOptions ? outOptions: undef);
 }
-AudioIO::~AudioIO() {}
 
 napi_status AudioIO::Init(napi_env env) {
   napi_status status;
@@ -106,15 +105,24 @@ napi_value AudioIO::Construct(napi_env env, napi_callback_info info) {
 
   AudioIO* audioIO = new AudioIO(env, info);
 
-  status = napi_wrap(env, thisVal, audioIO, Destruct, nullptr, &audioIO->mInstanceRef);
+  bool pendingException = false;
+  status = napi_is_exception_pending(env, &pendingException);
   CHECK_STATUS;
+
+  if (!pendingException) {
+    status = napi_wrap(env, thisVal, audioIO, Destruct, nullptr, &audioIO->mInstanceRef);
+    CHECK_STATUS;
+  }
 
   return thisVal;
 }
 
 void AudioIO::Destruct(napi_env env, void* data, void* hint) {
+  napi_status status;
   AudioIO* audioIO = static_cast<AudioIO*>(data);
-  napi_delete_reference(env, audioIO->mInstanceRef);
+  status = napi_delete_reference(env, audioIO->mInstanceRef);
+  FLOATING_STATUS;
+  delete audioIO;
 }
 
 napi_status AudioIO::NewInstance(napi_env env, napi_value arg, napi_value* instance) {
@@ -162,10 +170,10 @@ void readComplete(napi_env env, napi_status asyncStatus, void* data) {
   }
   REJECT_STATUS;
 
+  c->status = napi_create_object(env, &result);
+  REJECT_STATUS;
   if (c->mPaContext->getErrStr(errStr, /*isInput*/true)) {
     c->status = napi_create_string_utf8(env, errStr.c_str(), NAPI_AUTO_LENGTH, &err);
-    REJECT_STATUS;
-    c->status = napi_create_object(env, &result);
     REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "err", err);
     REJECT_STATUS;
@@ -177,17 +185,18 @@ void readComplete(napi_env env, napi_status asyncStatus, void* data) {
       REJECT_STATUS;
       c->status = napi_set_named_property(env, buffer, "timestamp", ts);
       REJECT_STATUS;
+    } else {
+      c->status = napi_create_buffer_copy(env, 0, nullptr, &bufferData, &buffer);
+      REJECT_STATUS;
     }
+    c->status = napi_set_named_property(env, result, "buf", buffer);
+    REJECT_STATUS;
     c->status = napi_create_uint32(env, c->mFinished, &finInt);
     REJECT_STATUS;
     c->status = napi_coerce_to_bool(env, finInt, &finished);
     REJECT_STATUS;
-
-    c->status = napi_create_object(env, &result);
-    REJECT_STATUS;
-    c->status = napi_set_named_property(env, result, "buf", buffer);
-    REJECT_STATUS;
     c->status = napi_set_named_property(env, result, "finished", finished);
+    REJECT_STATUS;
   }
 
   napi_status status;
@@ -303,8 +312,8 @@ napi_value AudioIO::Write(napi_env env, napi_callback_info info) {
 
 void quitExecute(napi_env env, void* data) {
   asyncCarrier* c = (asyncCarrier*) data;
-  c->mPaContext->stop(c->mStopFlag);
   c->mPaContext->quit();
+  c->mPaContext->stop(c->mStopFlag);
 }
 
 void quitComplete(napi_env env, napi_status asyncStatus, void* data) {

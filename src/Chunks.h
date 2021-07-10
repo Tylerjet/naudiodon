@@ -52,29 +52,62 @@ private:
 class Chunks {
 public:
   Chunks(uint32_t maxQueue)
-    : mQueue(maxQueue), mOffset(0)
+    : mQueue(maxQueue), mOffset(0), m(), cv()
   {}
   ~Chunks() {}
 
-  uint8_t *curBuf() const  { return mCurChunk ? mCurChunk->buf() : nullptr; }
-  uint32_t curBytes() const  { return mCurChunk ? mCurChunk->numBytes() : 0; }
-  double curTs() const  { return mCurChunk ? mCurChunk->ts() : 0.0; }
+  uint8_t *curBuf() const {
+    std::unique_lock<std::mutex> lk(m);
+    return mCurChunk ? mCurChunk->buf() : nullptr;
+  }
+  uint32_t curBytes() const {
+    std::unique_lock<std::mutex> lk(m);
+    return mCurChunk ? mCurChunk->numBytes() : 0;
+  }
+  double curTs() const {
+    std::unique_lock<std::mutex> lk(m);
+    return mCurChunk ? mCurChunk->ts() : 0.0;
+  }
 
-  uint32_t curOffset() const  { return mOffset; }
-  void incOffset(uint32_t off)  { mOffset += off; }
+  uint32_t curOffset() const {
+    std::unique_lock<std::mutex> lk(m);
+    return mOffset;
+  }
+  void incOffset(uint32_t off) {
+    std::unique_lock<std::mutex> lk(m);
+    mOffset += off;
+  }
 
   void waitNext() {
-    mCurChunk = mQueue.dequeue();
-    mOffset = 0;
-  }
-  void push(std::shared_ptr<Chunk> chunk) { mQueue.enqueue(chunk); }
+    auto curChunk = mQueue.dequeue();
 
-  void quit() { mQueue.quit(); }
+    std::unique_lock<std::mutex> lk(m);
+    mCurChunk = curChunk;
+    mOffset = 0;
+    cv.notify_one();
+  }
+
+  void waitDone() {
+    std::unique_lock<std::mutex> lk(m);
+    while(mCurChunk) {
+      cv.wait(lk);
+    }
+  }
+
+  void push(std::shared_ptr<Chunk> chunk) {
+    mQueue.enqueue(chunk);
+  }
+
+  void quit() {
+    mQueue.quit();
+  }
 
 private:
   ChunkQueue<std::shared_ptr<Chunk> > mQueue;
   std::shared_ptr<Chunk> mCurChunk;
   uint32_t mOffset;
+  mutable std::mutex m;
+  std::condition_variable cv;
 };
 
 } // namespace streampunk
