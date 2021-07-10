@@ -30,17 +30,11 @@ function AudioIO(options) {
     const result = await audioIOAdon.read(size);
     if (result.err) ioStream.destroy(result.err);
     else {
-<<<<<<< HEAD
-      ioStream.push(result.buf);
-      if (result.finished) ioStream.push(null);
-    }
-=======
       if (result.finished)
         ioStream.push(null);
       else
         ioStream.push(result.buf);
     };
->>>>>>> 985dc267f0f746605040514c14358666c9f2d4f7
   };
 
   const doWrite = async (chunk, encoding, cb) => {
@@ -81,18 +75,11 @@ function AudioIO(options) {
 
   ioStream.start = () => audioIOAdon.start();
 
-<<<<<<< HEAD
-  ioStream.quit = async (cb) => {
-    await audioIOAdon.quit('WAIT');
-    if (typeof cb === 'function') cb();
-  };
-=======
   ioStream.quit = async cb => {
     await audioIOAdon.quit('WAIT');
     if (typeof cb === 'function')
       cb();
   }
->>>>>>> 985dc267f0f746605040514c14358666c9f2d4f7
 
   ioStream.abort = (cb) => {
     audioIOAdon.quit('ABORT', () => {
